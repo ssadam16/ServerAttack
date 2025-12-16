@@ -1,4 +1,5 @@
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -8,6 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Slf4j
 public class ClientHandler {
 
     private final Socket socket;
@@ -15,8 +17,9 @@ public class ClientHandler {
     @Getter
     private final String id;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private DataInputStream in;
-    private DataOutputStream out;
+    private final DataInputStream in;
+    private final DataOutputStream out;
+
     private volatile boolean running = true;
 
     public ClientHandler(Socket socket, MainServer server) throws IOException {
@@ -32,12 +35,15 @@ public class ClientHandler {
     }
 
     private void readLoop() {
+        log.info("ClientHandler start reading messages from client with id {}", id);
         try {
             while (running && !socket.isClosed()) {
+                log.info("socket is running and not closed");
                 Message msg = JsonUtils.readMessage(in);
-                //лог
+                log.info("Server received message {}", msg);
+                server.getActionProcessor().process(msg, this);
+                log.info("Server has processed message {}", msg);
             }
-        } catch (IOException ignored) {
         } finally {
             close();
         }

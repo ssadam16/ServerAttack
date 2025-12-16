@@ -24,7 +24,9 @@ public class ActionProcessor {
         JsonNode msgData = msg.getData();
         String name = "player";
 
-        if (msgData != null && msgData.has("name")) name = msgData.get("name").asText();
+        if (msgData != null && msgData.has("name")) {
+            name = msgData.get("name").asText();
+        }
 
         state.addPlayer(
                 Player.builder()
@@ -62,7 +64,7 @@ public class ActionProcessor {
     private void handleAction(Message msg, ClientHandler src) {
         JsonNode msgData = msg.getData();
 
-        if (msgData == null && !msgData.has("action")) return;
+        if (msgData == null || !msgData.has("action")) return;
 
         String actionType = msgData.get("actionType").asText();
 
@@ -117,7 +119,7 @@ public class ActionProcessor {
         }
     }
 
-    private JsonNode createSnapshot() {
+    public JsonNode createSnapshot() {
         return JsonUtils.toJsonNode(Map.of(
            "progress",
            state.getProgress(),
