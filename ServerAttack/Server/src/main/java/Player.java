@@ -12,10 +12,16 @@ public class Player {
     @Setter
     private String name;
     @Setter
-    private String role;
+    private Role role;  // Изменено с String на Role
     @Setter
     private String zone;
     @Setter
     private boolean connected;
 
+    // Дефолтные значения для builder
+    public static class PlayerBuilder {
+        private Role role = Role.ENGINEER;  // По умолчанию инженер
+        private String zone = "MonitoringCenter";
+        private boolean connected = true;
+    }
 }

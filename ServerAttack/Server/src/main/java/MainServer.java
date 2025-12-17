@@ -1,23 +1,19 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Logger;
 
-@RequiredArgsConstructor
-@Slf4j
 public class MainServer {
-
+    private static final Logger log = LoggerFactory.getLogger(MainServer.class);
     private final int port;
     private final ConcurrentHashMap<String, ClientHandler> clients = new ConcurrentHashMap<>();
     private final AtomicLong seq = new AtomicLong(0);
@@ -26,27 +22,24 @@ public class MainServer {
     @Getter
     private final ActionProcessor actionProcessor;
 
-
     public MainServer(int port) {
         this.port = port;
         this.gameState = new GameState();
         this.actionProcessor = new ActionProcessor(gameState, this);
     }
 
-
-    public void start()  {
+    public void start() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             executor.scheduleAtFixedRate(this::gameLoop, 0, 2, TimeUnit.SECONDS);
 
             while (!serverSocket.isClosed()) {
                 Socket socket = serverSocket.accept();
-                log.info("Client has connected!");
                 ClientHandler handler = new ClientHandler(socket, this);
                 clients.put(handler.getId(), handler);
                 handler.start();
             }
         } catch (IOException e) {
-            log.error(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -56,7 +49,6 @@ public class MainServer {
 
     private void gameLoop() {
         try {
-            // Используем ActionProcessor для создания снапшота
             JsonNode snapshot = actionProcessor.createSnapshot();
             Message msg = Message.of(
                     MessageType.STATE_UPDATE,
@@ -65,9 +57,8 @@ public class MainServer {
                     snapshot
             );
             broadcast(msg);
-            log.info("Broadcasted STATE_UPDATE to {} clients", clients.size());
         } catch (Exception e) {
-            log.error("Error in gameLoop: {}", e.getMessage());
+            log.error(e.getMessage());
         }
     }
 
@@ -79,7 +70,7 @@ public class MainServer {
         });
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         int port = 8080;
         if (args.length > 0) {
             port = Integer.parseInt(args[0]);
@@ -87,5 +78,4 @@ public class MainServer {
         MainServer server = new MainServer(port);
         server.start();
     }
-
 }

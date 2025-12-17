@@ -10,5 +10,7 @@ public enum MessageType {
     PRESENCE_UPDATE,
     PING,
     PONG,
-    ERROR
+    ERROR,
+    HACKER_ACTION,  // Новый тип для хакерских действий
+    SABOTAGE_ALERT  // Новый тип для оповещения о саботаже
 }
